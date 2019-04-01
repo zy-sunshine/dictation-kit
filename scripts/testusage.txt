@@ -1,8 +1,8 @@
 # 按照静默声音切分文件，保存在 tmp/*.wav
 python3 tests/tsplit2.py data/01.mp3
-# 使用 julius 将 tmp/*.wav 文件翻译成 tmp/*.txt
-python3 tests/ttrans.py tmp/
-# 将 tmp/*.txt 翻译组合成 srt
+# 使用 julius 将 tmp/*.wav 文件提取成 tmp/*.txt
+python3 tests/tjuliusasr.py tmp/
+# 将 tmp/*.txt 文字组合成 srt
 python3 tests/tgensrt.py tmp
 
 # tests/tsr.py 测试 python 库 speech_recognition，暂废弃
