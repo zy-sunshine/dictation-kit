@@ -69,7 +69,8 @@ class Trans(object):
         print('file list: %s' % fileList)
         cmd = 'bash run-linux-dnn.sh -input file -filelist %s' % fileList
         ret, output = runcmd(cmd, callback = self)
-        self.parseOutput(output)
+        self.endFile()  # end last file
+        #self.parseOutput(output)
 
     def prepareListFile(self):
         if isfile(self.fileListPath):
