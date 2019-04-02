@@ -66,6 +66,12 @@ class Trans(object):
             chunkList.append(chunk)
             textList.append(text)
 
+        for idx in range(0, len(chunkList), 100):
+            start = idx
+            end = idx + 100
+            self.transPiece(chunkList[start: end], textList[start: end])
+
+    def transPiece(self, chunkList, textList):
         # The target language
         target = 'zh'
 

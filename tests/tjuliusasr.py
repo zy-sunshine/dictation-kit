@@ -112,7 +112,7 @@ class Trans(object):
             self.status = 'start_fpath'
         if self.status == 'start_fpath' and line.startswith(self.sentencePart):
             self.status = 'into_sentence'
-            self.appendText(line[len(self.sentencePart):].strip())
+            self.appendText(line[len(self.sentencePart):].strip().strip("。").strip())
 
     def writeStdout(self, line):
         self.parseLine(line)

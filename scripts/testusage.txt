@@ -6,3 +6,7 @@ python3 tests/tjuliusasr.py tmp/
 python3 tests/tgensrt.py tmp
 
 # tests/tsr.py 测试 python 库 speech_recognition，暂废弃
+
+# 可以请用户分离 mp3 比特率在 192-320kbps，其大小大概是 wav 的 1/10，如 18M mp3 wav 要 18xM
+# 上传后由任务分配音频文字识别，存储到数据库。
+# 用户可以从数据库数据生成srt 或者生成翻译后的srt。
