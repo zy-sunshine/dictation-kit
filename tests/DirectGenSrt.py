@@ -52,6 +52,10 @@ class TextChunk(object):
             self.startHour = int(self.startHour)
             self.startMin = int(self.startMin)
             self.startSec = int(self.startSec)
+            if len(self.startMs) < 3:
+                self.startMs += (3 - len(self.startMs)) * '0'
+            elif len(self.startMs) > 3:
+                self.startMs = self.startMs[:3]
             self.startMs = int(self.startMs)
             return
 
@@ -62,6 +66,19 @@ class TextChunk(object):
             sentence = sentence.strip().strip("。").strip()
             self.sentences.append(sentence)
 
+    DUMP_PATTERN = re.compile(r'^\[(\d+)..(\d+)\]\[(\d+):(\d+):(\d+)[\.,](\d+) ([\d\.]+)\](.*)$')
+    def fillDumpMatch(self, match, line):
+        (self.sampleStart, self.sampleStop, self.startHour, self.startMin,
+            self.startSec, self.startMs, self.duration, text) = match.groups()
+        self.sampleStart = int(self.sampleStart)
+        self.sampleStop = int(self.sampleStop)
+        self.startHour = int(self.startHour)
+        self.startMin = int(self.startMin)
+        self.startSec = int(self.startSec)
+        self.startMs = int(self.startMs)
+        self.duration = float(self.duration)
+        self.sentences.append(text.strip())
+
     @property
     def text(self):
         return ''.join(self.sentences)
@@ -69,12 +86,22 @@ class TextChunk(object):
     def dump(self):
         return '[%s..%s][%02d:%02d:%02d.%03d %.2f] %s' % (self.sampleStart,
             self.sampleStop, self.startHour, self.startMin,
-            self.startSec, self.startMs, self.duration, len(self.sentences))
-
-    def dumpDetail(self):
-        return '[%s..%s][%02d:%02d:%02d.%03d %.2f] %s' % (self.sampleStart,
-            self.sampleStop, self.startHour, self.startMin,
             self.startSec, self.startMs, self.duration, self.text)
+
+    def getEndHourMinSecMs(self):
+        secs = self.startHour * 60 * 60 + self.startMin * 60 + self.startSec + \
+            self.startMs / 1000 + self.duration
+        endHour, secs = divmod(secs, 60*60)
+        endMin, secs = divmod(secs, 60)
+        endSec = int(secs)
+        endMs = (secs - endSec) * 1000
+        return endHour, endMin, endSec, endMs
+
+    def dumpSrtSec(self, index):
+        endHour, endMin, endSec, endMs = self.getEndHourMinSecMs()
+        return '%d\n%02d:%02d:%02d,%03d --> %02d:%02d:%02d,%03d\n%s\n\n' % \
+            (index+1, self.startHour, self.startMin, self.startSec, self.startMs,
+                endHour, endMin, endSec, endMs, self.text)
 
 class Trans(object):
     def __init__(self, audioFilePath, outFilePath):
@@ -83,7 +110,8 @@ class Trans(object):
         self.lastChunk = None
         self.chunks = []
         self.status = 'idle'
-        self.index = 0
+        self.chunkIndex = 0
+        self.srtIndex = 0
         self.outFilePath = outFilePath
         self.outFile = open(outFilePath, 'wt')
 
@@ -133,8 +161,8 @@ class Trans(object):
 
     def startChunk(self):
         assert(self.lastChunk == None)
-        self.lastChunk = TextChunk(self.index)
-        self.index += 1
+        self.lastChunk = TextChunk(self.chunkIndex)
+        self.chunkIndex += 1
 
     def endChunk(self):
         if self.lastChunk:
@@ -142,14 +170,29 @@ class Trans(object):
             self.saveChunk(self.lastChunk)
             self.lastChunk = None
 
+    def parseDump(self, dumpLines):
+        index = 0
+        for line in dumpLines:
+            match = TextChunk.DUMP_PATTERN.search(line)
+            if match:
+                chunk = TextChunk(index)
+                index += 1
+                chunk.fillDumpMatch(match, line)
+                self.chunks.append(chunk)
+                self.saveChunk(chunk)
+
     def saveChunk(self, chunk):
         print(chunk.dump())
-        self.outFile.write('%s\n' % chunk.dumpDetail())
+        if not chunk.text.strip():
+            return
+        self.outFile.write(chunk.dumpSrtSec(self.srtIndex))
+        self.srtIndex += 1
         self.outFile.flush()
 
 t = Trans(sys.argv[1], sys.argv[2])
 t.work()
 #t.parseOutput(testOutput)
 #t.endChunk()
+#t.parseDump(open(sys.argv[1], 'rt').readlines())
 #for chunk in t.chunks:
 #    t.saveChunk(chunk)

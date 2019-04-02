@@ -68,7 +68,7 @@ class SrtGenner(object):
                 idx += 1
                 hour, minute, sec, ms = self.parseHourMinuteSecondMs(chunk.start)
                 hour_e, minute_e, sec_e, ms_e = self.parseHourMinuteSecondMs(chunk.end)
-                fp.write('%s\n' % idx)
+                fp.write('%s\n' % (idx + 1))
                 fp.write('%02d:%02d:%02d,%03d --> %02d:%02d:%02d,%03d\n' %
                     (hour, minute, sec, ms, hour_e, minute_e, sec_e, ms_e))
                 if text_zh:
