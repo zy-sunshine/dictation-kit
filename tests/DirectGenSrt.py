@@ -52,6 +52,7 @@ class TextChunk(object):
             self.startHour = int(self.startHour)
             self.startMin = int(self.startMin)
             self.startSec = int(self.startSec)
+
             if len(self.startMs) < 3:
                 self.startMs += (3 - len(self.startMs)) * '0'
             elif len(self.startMs) > 3:
@@ -77,7 +78,14 @@ class TextChunk(object):
         self.startSec = int(self.startSec)
         self.startMs = int(self.startMs)
         self.duration = float(self.duration)
+        self.reviseTime()
         self.sentences.append(text.strip())
+
+    def reviseTime(self):
+        # revise
+        self.startHour = self.startHour % 24
+        self.startMin = self.startMin % 60
+        self.startSec = self.startSec % 60
 
     @property
     def text(self):
@@ -114,6 +122,9 @@ class Trans(object):
         self.srtIndex = 0
         self.outFilePath = outFilePath
         self.outFile = open(outFilePath, 'wt')
+        bpath, ext = splitext(self.outFilePath)
+        self.dumpFilePath = bpath + '.log'
+        self.dumpFile = open(self.dumpFilePath, 'wt')
 
     def work(self):
         fileList = self.prepareListFile()
@@ -182,7 +193,10 @@ class Trans(object):
                 self.saveChunk(chunk)
 
     def saveChunk(self, chunk):
-        print(chunk.dump())
+        dumpStr = chunk.dump()
+        print(dumpStr)
+        self.dumpFile.write('%s\n' % dumpStr)
+        self.dumpFile.flush()
         if not chunk.text.strip():
             return
         self.outFile.write(chunk.dumpSrtSec(self.srtIndex))
